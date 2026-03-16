@@ -14,10 +14,16 @@ import {
 import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
 import { toPng, toSvg } from "html-to-image";
+import { Roboto, Kaushan_Script } from "next/font/google";
+
+const roboto = Kaushan_Script({
+  weight: "400",
+});
 
 export default function EidCard() {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [text, setText] = useState("");
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoRef = useRef<any>(null);
@@ -62,7 +68,7 @@ export default function EidCard() {
   return (
     <>
       <div className="bg-gray-50 w-full flex flex-col justify-start items-center h-screen p-4">
-        <div className="w-full h-[430px] sm:w-[515px] card mb-4">
+        <div className="w-full h-[430px] sm:w-[515px] card mb-3">
           <div ref={gifRef} className="w-full h-full relative">
             <Image
               src={"/images/Eid-card.gif"}
@@ -91,6 +97,14 @@ export default function EidCard() {
                 <LucidImage className="text-gray-500 text-4xl" />
               )}
             </div>
+
+            <div className="user-name z-20 absolute top-17/19 left-1/2 -translate-x-1/2 -translate-y-4/7">
+              <h1
+                className={`${roboto.className} w-max mb-2 text-[#303490] text-xl`}
+              >
+                {text}
+              </h1>
+            </div>
           </div>
         </div>
         <div className="flex flex-col items-center">
@@ -118,9 +132,21 @@ export default function EidCard() {
                 <ArrowBigRight />
               </Button>
             </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                className="input-style"
+                placeholder="Enter your name..."
+              />
+            </div>
           </Card>
 
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-3 mt-3">
             <input
               ref={photoRef}
               type="file"
