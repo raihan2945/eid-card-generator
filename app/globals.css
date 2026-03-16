@@ -37,3 +37,7 @@ body {
 .reactEasyCrop_CropAreaGrid::after{
   border: none !important;
 }
+
+div {
+  color: rgb(128, 64, 64); /* ✅ supported */
+}

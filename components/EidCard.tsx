@@ -5,38 +5,24 @@ import { Button, Card } from "antd";
 import {
   ArrowBigDown,
   ArrowBigLeft,
-  ArrowBigLeftDash,
   ArrowBigRight,
   ArrowBigUp,
-  ChevronLeft,
-  ChevronRight,
   CloudDownload,
   CloudUpload,
+  Image as LucidImage,
 } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useState } from "react";
-import Cropper, { Area, Point } from "react-easy-crop";
+import { useCallback, useRef, useState } from "react";
+import { toPng, toSvg } from "html-to-image";
 
 export default function EidCard() {
-  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // ← card with photo
-  const [croppedBlobUrl, setCroppedBlobUrl] = useState<string | null>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
-  const CARD_WIDTH = 1200;
-  const CARD_HEIGHT = 800;
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoRef = useRef<any>(null);
 
-  // Where the black square / photo frame is located in your template
-  const PHOTO_X = 380; // ← you need to measure this
-  const PHOTO_Y = 220;
-  const PHOTO_W = 440;
-  const PHOTO_H = 400;
-
-  const onCropComplete = useCallback((_: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const gifRef = useRef<any>(null);
 
   const move = (dx: any, dy: any) => {
     setPosition((prev) => ({
@@ -45,33 +31,65 @@ export default function EidCard() {
     }));
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setPhotoPreview(url);
+
+    return () => URL.revokeObjectURL(url);
+  };
+
+  const handleButtonClick = () => {
+    photoRef?.current.click(); // open file dialog
+  };
+
+  const handleConvertToImage = async () => {
+    if (gifRef.current === null) return;
+
+    try {
+      const dataUrl = await toPng(gifRef.current, { pixelRatio: 5 });
+      const link = document.createElement("a");
+      link.download = "eid-mubarak.png";
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Failed to convert HTML to image", err);
+    }
+  };
+
   return (
     <>
-      <div className="bg-[#FCF4EB] w-full flex flex-col justify-start items-center h-screen p-4">
+      <div className="bg-gray-50 w-full flex flex-col justify-start items-center h-screen p-4">
         <div className="w-full h-[430px] sm:w-[515px] card mb-4">
-          <div className="w-full h-full relative">
+          <div ref={gifRef} className="w-full h-full relative">
             <Image
-              src="/images/Eid-card.gif"
+              src={"/images/Eid-card.gif"}
               alt="Profile picture"
               width={500}
               height={300}
               priority
               objectFit="cover"
-              className="z-10 absolute max-h-[430px] w-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+              className="z-10 border border-gray-200 rounded absolute max-h-[430px] w-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
             />
 
             <div className="absolute top-5/7 left-1/2 -translate-x-1/2 -translate-y-4/7">
-              <Image
-                src="/images/du2.jpg"
-                alt="zoom"
-                width={500}
-                height={500}
-                style={{
-                  transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-                  transition: "transform 0.1s",
-                }}
-                className="max-h-27 w-auto"
-              />
+              {photoPreview ? (
+                <Image
+                  src={photoPreview || ""}
+                  alt="zoom"
+                  width={500}
+                  height={500}
+                  style={{
+                    transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                    transition: "transform 0.1s",
+                  }}
+                  className="max-h-27 w-auto"
+                />
+              ) : (
+                <LucidImage className="text-gray-500 text-4xl" />
+              )}
             </div>
           </div>
         </div>
@@ -103,23 +121,25 @@ export default function EidCard() {
           </Card>
 
           <div className="flex gap-3 mt-4">
+            <input
+              ref={photoRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              style={{ display: "none" }}
+            />
             <Button
               size="large"
               type="primary"
               style={{
                 backgroundColor: "#303490",
               }}
+              onClick={handleButtonClick}
             >
               <CloudUpload />
               Upload
             </Button>
-            <Button
-              // style={{
-              //   backgroundColor: "#303490",
-              // }}
-              size="large"
-              // type="primary"
-            >
+            <Button size="large" onClick={handleConvertToImage}>
               <CloudDownload />
               Download
             </Button>
